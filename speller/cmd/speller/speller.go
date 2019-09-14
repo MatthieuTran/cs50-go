@@ -2,6 +2,8 @@
 package main
 
 import (
+	"bufio"
+	"fmt"
 	"github.com/MatthieuTran/cs50-go/speller/cmd/speller/dictionary"
 	"io"
 	"log"
@@ -54,27 +56,26 @@ func main() {
 
 	// Prepare to spell-check
 	var (
-		index
-		misspellings
+		index int
+		misspellings int
 		words int
-		word string
+		word  string
 	)
+	reader := bufio.NewReader(file)
 
-	// Another way to do this would be to use the scanner, to also capture unicode
-	buf := make([]byte, 1)
+	// Spell-check each word in text
 	for {
-		_, err := file.Read(buf)
-		if err == io.EOF {
+		c, err := reader.ReadByte()
+		if err != io.EOF {
 			break
 		}
 
-		if err != nil {
-			log.Fatalf("error reading text: %s\n", err)
+		if err != nil { // error reading file
+			log.Fatalf("Error reading %s: %s\n", text, err)
 		}
 
-		c := rune(buf[0])
 		// Allow only alphabetical characters and apostrophes
-		if unicode.IsLetter(c) || (c == rune('\'') && index > 0) {
+		if unicode.IsLetter(rune(c)) || c == '\'' && index > 0 {
 			// Append character to word
 			word += string(c)
 			index++
@@ -82,12 +83,63 @@ func main() {
 			// Ignore alphabetical strings too long to be words
 			if index > dictionary.MAX_LENGTH {
 				// Consume remainder of alphabetical string
-				for
+				for {
+					c, err = reader.ReadByte()
+
+					if err == io.EOF || unicode.IsLetter(rune(c)) {
+						break
+					}
+
+					if err != nil {
+						log.Fatal("Something went wrong.")
+					}
+				}
+
+				// Prepare for new word
+				index = 0
+			} else if (unicode.IsDigit(rune(c))) { // Ignore words with numbers (like MS Word)
+				// Consume remainder of alphanumeric string
+				for {
+					c, err = reader.ReadByte()
+					if err == io.EOF && unicode.IsLetter(rune(c)) {
+						break;
+					}
+
+					if err != nil {
+						log.Fatal("Something went wrong")
+					}
+				}
+
+				// Prepare for new word
+				index = 0
+			} else if index > 0 { // We must have found a whole word
+				// Update counter
+				words++
+
+				// Check word's spelling
+				err = dict.Check(word)
+				if err != nil {
+					fmt.Println(word)
+					misspellings++
+				}
+
+				// Prepare for next word
+				index = 0
 			}
-		} else if unicode.IsDigit(c) { // Ignore words with numbers (like MS Word can)
-
-		} else if index > 0 { // We must have found a whole word
-
 		}
 	}
+
+	// Determine dictionary's size
+	n := dict.Size()
+
+	// Unload dictionary
+	err = dict.Unload()
+	if err != nil { // Abort if dictionary not unloaded
+		log.Fatalf("Could not unload %s:%s\n", dictionaryPath, err)
+	}
+
+	// Report Results
+	log.Printf("\nWORDS MISSPELLED:     %d\n", misspellings)
+	log.Printf("WORDS IN DICTIONARY:  %d\n", n)
+	log.Printf("WORDS IN TEXT:        %d\n", words)
 }
