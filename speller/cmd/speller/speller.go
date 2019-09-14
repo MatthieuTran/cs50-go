@@ -4,7 +4,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/MatthieuTran/cs50-go/speller/cmd/speller/dictionary"
+	"github.com/MatthieuTran/cs50-go/speller/dictionary"
 	"io"
 	"log"
 	"os"

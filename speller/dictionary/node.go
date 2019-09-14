@@ -9,3 +9,8 @@ type Node struct {
 	Word string
 	Next *Node
 }
+
+func NewNode(word string) *Node {
+	return &Node{Word: word}
+}
+

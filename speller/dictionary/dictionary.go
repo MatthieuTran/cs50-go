@@ -3,6 +3,7 @@ package dictionary
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 )
@@ -28,7 +29,10 @@ func (d *Dictionary) Hash(word string) byte {
 // Loads dictionary into memory, returning true if successful else false
 func (d *Dictionary) Load(dictionary string) error {
 	// Open Dictionary
-	file, err := os.OpenFile("dictionary", os.O_RDONLY, 0444)
+	file, err := os.OpenFile(dictionary, os.O_RDONLY, 0444)
+	if err == io.EOF { // Return when dictionary is fully loaded
+		return nil
+	}
 	if err != nil {
 		return err
 	}
@@ -36,7 +40,7 @@ func (d *Dictionary) Load(dictionary string) error {
 
 	// Buffer for a word (max size: MAX_LENGTH + 1)
 	var word string
-	var n int
+	n := 1
 
 	// Insert words into hash table
 	for n > 0 {
@@ -44,8 +48,6 @@ func (d *Dictionary) Load(dictionary string) error {
 		if err != nil {
 			return err
 		}
-
-		// TODO
 	}
 
 	// Indicate Success
