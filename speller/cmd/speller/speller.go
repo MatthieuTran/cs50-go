@@ -52,7 +52,7 @@ func main() {
 	defer file.Close()
 
 	// Prepare to report misspellings
-	log.Print("\nMISSPELLED WORDS\n\n")
+	fmt.Print("\nMISSPELLED WORDS\n\n")
 
 	// Prepare to spell-check
 	var (
@@ -66,7 +66,7 @@ func main() {
 	// Spell-check each word in text
 	for {
 		c, err := reader.ReadByte()
-		if err != io.EOF {
+		if err == io.EOF {
 			break
 		}
 
@@ -75,7 +75,7 @@ func main() {
 		}
 
 		// Allow only alphabetical characters and apostrophes
-		if unicode.IsLetter(rune(c)) || c == '\'' && index > 0 {
+		if unicode.IsLetter(rune(c)) || (c == '\'' && index > 0) {
 			// Append character to word
 			word += string(c)
 			index++
@@ -91,22 +91,20 @@ func main() {
 					}
 
 					if err != nil {
-						log.Fatal("Something went wrong.")
+						log.Fatal(err)
 					}
-				}
 
-				// Prepare for new word
-				index = 0
-			} else if (unicode.IsDigit(rune(c))) { // Ignore words with numbers (like MS Word)
+					// Prepare for new word
+					index = 0
+				}
+			}
+			} else if unicode.IsDigit(rune(c)) { // Ignore words with numbers (like MS Word)
 				// Consume remainder of alphanumeric string
-				for {
+				for err != io.EOF && unicode.IsLetter(rune(c)) || unicode.IsNumber(rune(c)) {
 					c, err = reader.ReadByte()
-					if err == io.EOF && unicode.IsLetter(rune(c)) {
-						break;
-					}
 
 					if err != nil {
-						log.Fatal("Something went wrong")
+						log.Fatal(err)
 					}
 				}
 
@@ -117,17 +115,17 @@ func main() {
 				words++
 
 				// Check word's spelling
-				err = dict.Check(word)
-				if err != nil {
+				success := dict.Check(word)
+				if !success {
 					fmt.Println(word)
 					misspellings++
 				}
 
 				// Prepare for next word
+				word = ""
 				index = 0
 			}
 		}
-	}
 
 	// Determine dictionary's size
 	n := dict.Size()
@@ -139,7 +137,7 @@ func main() {
 	}
 
 	// Report Results
-	log.Printf("\nWORDS MISSPELLED:     %d\n", misspellings)
-	log.Printf("WORDS IN DICTIONARY:  %d\n", n)
-	log.Printf("WORDS IN TEXT:        %d\n", words)
+	fmt.Printf("\nWORDS MISSPELLED:     %d\n", misspellings)
+	fmt.Printf("WORDS IN DICTIONARY:  %d\n", n)
+	fmt.Printf("WORDS IN TEXT:        %d\n", words)
 }

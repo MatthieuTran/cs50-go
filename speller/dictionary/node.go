@@ -11,6 +11,6 @@ type Node struct {
 }
 
 func NewNode(word string) *Node {
-	return &Node{Word: word}
+	return &Node{Word: word, Next: nil}
 }
 
